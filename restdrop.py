@@ -1,34 +1,46 @@
-import bcrypt
+import bcrypt, os, sqlite3
 from bottle import response, route, run
 
 """
 API
 ---
-GET    /api/key/<user>
-PUT    /api/key
-DELETE /api/messages
-DELETE /api/messages/<msg_id>
-GET    /api/messages/status
-GET    /api/messages/<msg_id>
-POST   /api/messages/<user>
-PUT    /api/password
+GET    /key/<user>
+PUT    /key
+DELETE /messages
+DELETE /messages/<msg_id>
+GET    /messages/status
+GET    /messages/<msg_id>
+POST   /messages/<user>
+PUT    /password
 """
 
-db_root = '/home/$PROG'
+db_root = '/home/restdrop/data'
 
-def valid_user(request, user):
-    host = request.headers.get('Host')
-    if not True: #determine if user@host is legit
-        return False
-    else:
-        return True
+def get_db_path(request):
+    user    = request.auth[0]
+    host    = request.headers.get('Host')
+    account = user + '@' + host
+    db_path = os.path.join(db_root, host, account)
+    return db_path
+
+def update_user(db_path, table, value):
+    # calculate id hash
+    payload = (table, id, value)
+    db = sqlite3.connect(db_path)
+    c = db.cursor()
+    c.execute('INSERT INTO ?(?) VALUES(?)', payload)
+
+def valid_user(request):
+    db_path = get_db_path(request)
+    return os.path.isfile(db_path)
 
 def valid_credentials(user, password):
-    hashed_pw = user.hashed_pw
+
+    hashed_pw = user.hashed_pw # ?!?
     return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
-@get('/api/key/<user>')
-@get('/api/key/<user>/')
+@get('/key/<user>')
+@get('/key/<user>/')
 def request_key(user):
     if not valid_user(request, user):
         return.status = 401
@@ -39,31 +51,31 @@ def request_key(user):
             response.status = 200
             return user.key
 
-@put('/api/key')
-@put('/api/key/')
+@put('/key')
+@put('/key/')
 @auth_basic(valid_credentials)
 def update_key(user):
-        # accept uploaded key
-        # verify key validity
-        # update key
-        return.status = 200
-    else:
-        return.status = 401
+    db_path = get_db_path(request)
+    db = sqlite3.connect(db_path)
+    c = db.cursor()
+    payload = (key, )
+    c.execute('INSERT OR REPLACE INTO auth VALUES(key, ?)', payload)
+    return.status = 200
 
-@delete('/api/messages')
-@delete('/api/messages/')
+@delete('/messages')
+@delete('/messages/')
 @auth_basic(valid_credentials)
 def delete_message():
     pass
 
-@delete('/api/messages/<msg_id>')
-@delete('/api/messages/<msg_id>/')
+@delete('/messages/<msg_id>')
+@delete('/messages/<msg_id>/')
 @auth_basic(valid_credentials)
 def delete_message():
     pass
 
-@get('/api/messages')
-@get('/api/messages/')
+@get('/messages')
+@get('/messages/')
 @auth_basic(valid_credentials)
 def get_messages():
         # return dict of queue contents
@@ -71,27 +83,34 @@ def get_messages():
     else:
         response.status = 401
 
-@get('/api/messages/<msg_id>')
-@get('/api/messages/<msg_id>/')
+@get('/messages/<msg_id>')
+@get('/messages/<msg_id>/')
 @auth_basic(valid_credentials)
 def retrieve_message(msg_id):
     pass
 
-@post('/api/messages/<user>')
-@post('/api/messages/<user>/')
+@post('/messages/<user>')
+@post('/messages/<user>/')
 def post_message(user):
-    if not valid_user(request, user):
+    if not valid_user(request):
         response.status = 400
     else:
-        # accept uploaded message + confirmation hash
-        # if confirmation hash is correct:
-        #     response.status = 200
-        pass
+        db_path = get_db_path(request)
+        db = sqlite3.connect(db_path)
+        c = db.cursor()
+        payload = (id, value)
+        c.execute('INSERT INTO messages(?) VALUES(?)', payload)
+        response.status = 200
 
-@put('/api/password')
-@put('/api/password/')
+@put('/password')
+@put('/password/')
 @auth_basic(valid_credentials)
-def update_password(user):
-    pass
+def update_password():
+    db_path = get_db_path(request)
+    db = sqlite3.connect(db_path)
+    c = db.cursor()
+    payload = (hash, )
+    c.execute('INSERT OR REPLACE INTO auth VALUES(hash, ?)', payload)
+    return.status = 200
 
 run(app, host='localhost', port=8192)
