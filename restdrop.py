@@ -98,8 +98,9 @@ def post_message(user):
         db_path = get_db_path(request)
         db = sqlite3.connect(db_path)
         c = db.cursor()
-        payload = (id, value)
+        payload = (id, message) # where does the message come from?
         c.execute('INSERT INTO messages(?) VALUES(?)', payload)
+        db.close()
         response.status = 200
 
 @put('/password')
@@ -111,6 +112,7 @@ def update_password():
     c = db.cursor()
     payload = (hash, )
     c.execute('INSERT OR REPLACE INTO auth VALUES(hash, ?)', payload)
+    db.close()
     return.status = 200
 
 run(app, host='localhost', port=8192)
