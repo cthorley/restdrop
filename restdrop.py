@@ -17,8 +17,8 @@ PUT    /password
 db_root = '/home/restdrop/data'
 
 def get_db_path(request):
-    user    = request.auth[0]
-    host    = request.headers.get('Host')
+    user = request.auth[0]
+    host = request.headers.get('Host')
     account = user + '@' + host
     db_path = os.path.join(db_root, host, account)
     return db_path
@@ -27,22 +27,28 @@ def valid_user(request):
     db_path = get_db_path(request)
     return os.path.isfile(db_path)
 
-def valid_credentials(user, password):
+def valid_credentials(request):
     password = request.auth[1]
-    hashed_pw = # pulled from db
+    db_path = get_db_path(request)
+    db = sqlite3.connect(db_path)
+    c = db.cursor()
+    c.execute('SELECT * FROM Auth WHERE Id=hash')
+    hash_record = c.fetchone()
+    db.close()
     return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
 @get('/key/<user>')
 @get('/key/<user>/')
-def request_key(user):
-    if not valid_user(request, user):
-        return.status = 401
+def request_key():
+    if not valid_user(request):
+        return some_error_code
     else:
-        if not key_available(user):
-            response.status = 404
-        else:
-            response.status = 200
-            return user.key
+        db_path = get_db_path(request)
+        db = sqlite3.connect(db_path)
+        c = db.cursor()
+        c.execute('SELECT * FROM Auth WHERE Id=key')
+        key_record = c.fetchone()
+        db.close()
 
 @put('/key')
 @put('/key/')
@@ -53,6 +59,7 @@ def update_key(user):
     c = db.cursor()
     payload = (key, )
     c.execute('INSERT OR REPLACE INTO auth VALUES(key, ?)', payload)
+    db.close()
     return.status = 200
 
 @delete('/messages')
