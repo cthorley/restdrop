@@ -23,20 +23,13 @@ def get_db_path(request):
     db_path = os.path.join(db_root, host, account)
     return db_path
 
-def update_user(db_path, table, value):
-    # calculate id hash
-    payload = (table, id, value)
-    db = sqlite3.connect(db_path)
-    c = db.cursor()
-    c.execute('INSERT INTO ?(?) VALUES(?)', payload)
-
 def valid_user(request):
     db_path = get_db_path(request)
     return os.path.isfile(db_path)
 
 def valid_credentials(user, password):
-
-    hashed_pw = user.hashed_pw # ?!?
+    password = request.auth[1]
+    hashed_pw = # pulled from db
     return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
 @get('/key/<user>')
