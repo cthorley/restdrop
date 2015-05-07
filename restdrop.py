@@ -23,7 +23,7 @@ def valid_user(request, user):
     else:
         return True
 
-def validate_credentials(user, password):
+def valid_credentials(user, password):
     hashed_pw = user.hashed_pw
     return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
@@ -41,7 +41,7 @@ def request_key(user):
 
 @put('/api/key')
 @put('/api/key/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def update_key(user):
         # accept uploaded key
         # verify key validity
@@ -52,19 +52,19 @@ def update_key(user):
 
 @delete('/api/messages')
 @delete('/api/messages/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def delete_message():
     pass
 
 @delete('/api/messages/<msg_id>')
 @delete('/api/messages/<msg_id>/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def delete_message():
     pass
 
 @get('/api/messages')
 @get('/api/messages/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def get_messages():
         # return dict of queue contents
         pass
@@ -73,15 +73,14 @@ def get_messages():
 
 @get('/api/messages/<msg_id>')
 @get('/api/messages/<msg_id>/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def retrieve_message(msg_id):
     pass
 
 @post('/api/messages/<user>')
 @post('/api/messages/<user>/')
-@valid_user()
 def post_message(user):
-    if not is_user(user):
+    if not valid_user(request, user):
         response.status = 400
     else:
         # accept uploaded message + confirmation hash
@@ -91,7 +90,7 @@ def post_message(user):
 
 @put('/api/password')
 @put('/api/password/')
-@auth_basic(validate_credentials)
+@auth_basic(valid_credentials)
 def update_password(user):
     pass
 
