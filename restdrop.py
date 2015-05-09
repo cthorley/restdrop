@@ -26,22 +26,23 @@ def get_db_path():
 
 def valid_user():
     db_path = get_db_path()
-    if not os.path.isfile(db_path)
+    if not os.path.isfile(db_path):
         abort(404, "User not found.")
         return False
     else:
         return True
 
 def valid_credentials():
-    if valid_user():
-        password = request.auth[1]
-        db_path = get_db_path()
-        db = sqlite3.connect(db_path)
-        c = db.cursor()
-        c.execute('SELECT * FROM Auth WHERE Id=hash')
-        hash_record = c.fetchone()
-        db.close()
-        return bcrypt.hashpw(password, hashed_pw) == hashed_pw
+    db_path = get_db_path()
+    if not os.path.isfile(db_path):
+        return False
+    db = sqlite3.connect(db_path)
+    c = db.cursor()
+    c.execute('SELECT * FROM Auth WHERE Id=hashed_pw')
+    hashed_pw_record = c.fetchone()
+    db.close()
+    # extract hashed_pw from hashed_pw_record
+    return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
 @get('/key/<user>')
 @get('/key/<user>/')
@@ -52,7 +53,7 @@ def get_key():
         c = db.cursor()
         c.execute('SELECT * FROM Auth WHERE Id=key')
         key_record = c.fetchone()
-        # provide key to response opbject
+        # provide key to response object
         db.close()
         return.status = 200
 
@@ -64,7 +65,7 @@ def update_key(user):
     db = sqlite3.connect(db_path)
     c = db.cursor()
     payload = (key, )
-    c.execute('INSERT OR REPLACE INTO auth VALUES(key, ?)', payload)
+    c.execute('INSERT OR REPLACE INTO Auth VALUES(key, ?)', payload)
     db.close()
     return.status = 200
 
