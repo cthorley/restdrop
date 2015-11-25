@@ -1,5 +1,5 @@
 import bcrypt, os, sqlite3
-from bottle import response, route, run
+from bottle import auth_basic, delete, get, post, put, request, route, run
 
 """
 API
@@ -20,8 +20,7 @@ db_root = '/home/restdrop/data'
 def get_db_path():
     user = request.auth[0]
     host = request.headers.get('Host')
-    account = user + '@' + host
-    db_path = os.path.join(db_root, host, account)
+    db_path = os.path.join(db_root, host, user)
     return db_path
 
 def valid_user():
@@ -33,21 +32,20 @@ def valid_user():
         return True
 
 def valid_credentials():
-    db_path = get_db_path()
-    if not os.path.isfile(db_path):
-        return False
-    db = sqlite3.connect(db_path)
-    c = db.cursor()
-    c.execute('SELECT * FROM Auth WHERE Id=hashed_pw')
-    hashed_pw_record = c.fetchone()
-    db.close()
-    # extract hashed_pw from hashed_pw_record
-    return bcrypt.hashpw(password, hashed_pw) == hashed_pw
+    if valid_user():
+        db_path = get_db_path()
+        db = sqlite3.connect(db_path)
+        c = db.cursor()
+        c.execute('SELECT * FROM Auth WHERE Id=hashed_pw')
+        hashed_pw_record = c.fetchone()
+        db.close()
+        # extract hashed_pw from hashed_pw_record
+        return bcrypt.hashpw(password, hashed_pw) == hashed_pw
 
 @get('/key/<user>')
 @get('/key/<user>/')
-def get_key():
-    if valid_user():
+def get_key(user):
+    if valid_user(user):
         db_path = get_db_path(request)
         db = sqlite3.connect(db_path)
         c = db.cursor()
@@ -55,7 +53,7 @@ def get_key():
         key_record = c.fetchone()
         # provide key to response object
         db.close()
-        return.status = 200
+        Response.status = 200
 
 @put('/key')
 @put('/key/')
@@ -67,7 +65,7 @@ def update_key(user):
     payload = (key, )
     c.execute('INSERT OR REPLACE INTO Auth VALUES(key, ?)', payload)
     db.close()
-    return.status = 200
+    Response.status = 200
 
 @delete('/messages')
 @delete('/messages/')
@@ -85,6 +83,7 @@ def delete_message():
 @get('/messages/')
 @auth_basic(valid_credentials)
 def get_messages():
+    if true:
         # return dict of queue contents
         pass
     else:
@@ -106,7 +105,7 @@ def post_message(user):
         payload = (id, message) # where does the message come from?
         c.execute('INSERT INTO Messages(?) VALUES(?)', payload)
         db.close()
-        response.status = 201
+        Response.status = 201
 
 @put('/password')
 @put('/password/')
@@ -119,6 +118,7 @@ def update_password():
     payload = (hashed_pw,)
     c.execute('INSERT OR REPLACE INTO Auth VALUES(hash, ?)', payload)
     db.close()
-    return.status = 201
+    Response.status = 201
 
-run(app, host='localhost', port=8192)
+run(host='localhost', port=8192, debug=True)
+# bottle.run(server='bjoern')
